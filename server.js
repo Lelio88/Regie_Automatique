@@ -9,8 +9,8 @@ const path = require('path');
 app.use(express.static(path.join(__dirname, 'public')));
 
 
-// Keep a map of sockets that identify themselves as 'dashboard' or 'phone'
 let dashboardSocketId = null;
+const phones = new Set();
 
 
 io.on('connection', socket => {
@@ -19,13 +19,21 @@ io.on('connection', socket => {
 
     socket.on('identify', (role) => {
         console.log('identify', socket.id, role);
-        if (role === 'dashboard') dashboardSocketId = socket.id;
         socket.role = role;
 
+        if (role === 'dashboard') {
+            dashboardSocketId = socket.id;
+            // Tell all already-connected phones to resend their offer
+            for (const phoneId of phones) {
+                io.to(phoneId).emit('request-offer');
+            }
+        }
 
-        // notify dashboard of new phone
-        if (role === 'phone' && dashboardSocketId) {
-            io.to(dashboardSocketId).emit('phone-joined', { phoneId: socket.id });
+        if (role === 'phone') {
+            phones.add(socket.id);
+            if (dashboardSocketId) {
+                io.to(dashboardSocketId).emit('phone-joined', { phoneId: socket.id });
+            }
         }
     });
 
@@ -52,7 +60,7 @@ io.on('connection', socket => {
         if (socket.id === dashboardSocketId) {
             dashboardSocketId = null;
         } else {
-            // notify dashboard that phone left
+            phones.delete(socket.id);
             if (dashboardSocketId) io.to(dashboardSocketId).emit('phone-left', { phoneId: socket.id });
         }
     });
