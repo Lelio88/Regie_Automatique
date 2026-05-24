@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="/style.css">
 </head>
 <body>
+    <div id="status" class="status disconnected">Déconnecté</div>
     <h2>Dashboard</h2>
     <div id="phonesContainer"></div>
     <div>
@@ -26,8 +27,20 @@ document.getElementById('replayBtn').addEventListener('click', () => {
     triggerReplay();
 });
 
+const statusEl = document.getElementById('status');
+
+function setStatus(state, text) {
+    statusEl.className = 'status ' + state;
+    statusEl.textContent = text;
+}
+
 socket.on('connect', () => {
+    setStatus('connected', 'Connecté');
     socket.emit('identify', 'dashboard');
+});
+
+socket.on('disconnect', () => {
+    setStatus('disconnected', 'Déconnecté — reconnexion…');
 });
 
 socket.on('phone-joined', ({ phoneId }) => {
