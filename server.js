@@ -31,17 +31,19 @@ io.on('connection', socket => {
 
 
     socket.on('offer', ({ targetId, sdp }) => {
-        io.to(targetId).emit('offer', { from: socket.id, sdp });
+        const dest = targetId || dashboardSocketId;
+        if (dest) io.to(dest).emit('offer', { from: socket.id, sdp });
     });
 
 
     socket.on('answer', ({ targetId, sdp }) => {
-        io.to(targetId).emit('answer', { from: socket.id, sdp });
+        if (targetId) io.to(targetId).emit('answer', { from: socket.id, sdp });
     });
 
 
     socket.on('ice-candidate', ({ targetId, candidate }) => {
-        io.to(targetId).emit('ice-candidate', { from: socket.id, candidate });
+        const dest = targetId || dashboardSocketId;
+        if (dest) io.to(dest).emit('ice-candidate', { from: socket.id, candidate });
     });
 
 
