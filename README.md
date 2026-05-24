@@ -1,71 +1,34 @@
 # Regie 24h Prototype
 
-## Description
-
-Application web de régie vidéo en temps réel permettant de diffuser et contrôler plusieurs flux vidéo depuis des smartphones vers un dashboard centralisé. Le système utilise WebRTC pour la transmission vidéo peer-to-peer et Socket.IO pour la signalisation.
+Système de régie vidéo multi-caméras en temps réel. Connectez plusieurs smartphones pour diffuser leurs flux vidéo vers un dashboard centralisé, avec sélection de la caméra principale et replay instantané.
 
 ## Fonctionnalités
 
-- **Streaming multi-sources** : Connexion de plusieurs téléphones diffusant simultanément leur flux vidéo
-- **Dashboard de contrôle** : Interface centralisée pour visualiser et sélectionner les différents flux
-- **Vidéo principale** : Sélection du flux à afficher en grand format
-- **Replay instantané** : Fonction de replay des 10 dernières secondes de la vidéo principale
-- **Communication temps réel** : Synchronisation instantanée entre les clients via WebSocket
+- **Multi-caméras** : plusieurs téléphones diffusent simultanément
+- **Dashboard de contrôle** : visualisez tous les flux et choisissez lequel afficher en grand
+- **Replay instantané** : revoyez les 10 dernières secondes à tout moment
 
-## Technologies utilisées
+## Démarrage rapide
 
-- **Backend** : Node.js, Express
-- **Communication** : Socket.IO
-- **Streaming vidéo** : WebRTC (RTCPeerConnection)
-- **Enregistrement** : MediaRecorder API
-- **Frontend** : HTML5, JavaScript vanilla
-
-## Architecture
-
-```
-regie-24h-prototype/
-├── server.js                    # Serveur de signalisation WebRTC
-├── package.json                 # Dépendances Node.js
-└── public/
-    ├── dashboard.html           # Interface de régie
-    ├── phone_client.html        # Client mobile pour streaming
-    └── style.css                # Styles
-```
-
-## Installation
-
-1. Cloner le repository :
-```bash
-git clone https://github.com/Lelio88/regie-24h-prototype.git
-cd regie-24h-prototype
-```
-
-2. Installer les dépendances :
 ```bash
 npm install
-```
-
-3. Lancer le serveur :
-```bash
 npm start
 ```
 
-4. Accéder à l'application :
-   - Dashboard : `http://localhost:3000/dashboard.html`
-   - Client téléphone : `http://localhost:3000/phone_client.html`
+Puis ouvrez dans votre navigateur :
+- **Dashboard** (sur ordinateur) : http://localhost:3000/dashboard.html
+- **Client téléphone** (sur mobile) : http://localhost:3000/phone_client.html
 
 ## Utilisation
 
 1. Ouvrir le dashboard sur un ordinateur
-2. Ouvrir le client téléphone sur un ou plusieurs smartphones
-3. Cliquer sur "Start stream" sur chaque téléphone pour commencer la diffusion
-4. Sélectionner le flux à afficher en vidéo principale depuis le dashboard
-5. Utiliser "Replay Last 10s" pour revoir les 10 dernières secondes
+2. Ouvrir le client sur un ou plusieurs smartphones (même réseau Wi-Fi)
+3. Appuyer sur « Start stream » sur chaque téléphone
+4. Cliquer sur « Set as Main Video » sous la vignette souhaitée
+5. Utiliser « Replay Last 10s » pour revoir un moment
 
-## Note technique
+## Prérequis
 
-Ce projet nécessite une connexion HTTPS en production pour accéder aux API MediaDevices. En développement local, HTTP fonctionne sur localhost.
-
----
-
-*Prototype de système de régie vidéo multi-caméras*
+- Node.js installé
+- Tous les appareils sur le même réseau local
+- En production : HTTPS requis (les navigateurs bloquent l'accès caméra sans HTTPS)
