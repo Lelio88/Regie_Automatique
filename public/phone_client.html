@@ -21,12 +21,12 @@
         const socket = io();
         let pc;
         let localStream;
+        let streaming = false;
 
 
         socket.emit('identify', 'phone');
 
 
-        // Single listeners registered once (avoid accumulation on repeated clicks)
         socket.on('answer', async ({ from, sdp }) => {
             if (!pc) return;
             try {
@@ -40,8 +40,38 @@
         });
 
 
+        socket.on('connect', () => {
+            socket.emit('identify', 'phone');
+            if (streaming && localStream) {
+                createAndSendOffer();
+            }
+        });
+
+
+        const rtcConfig = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+
+
+        async function createAndSendOffer() {
+            if (pc) { pc.close(); pc = null; }
+
+            pc = new RTCPeerConnection(rtcConfig);
+
+            localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
+
+            pc.onicecandidate = (e) => {
+                if (e.candidate) {
+                    socket.emit('ice-candidate', { targetId: null, candidate: e.candidate });
+                }
+            };
+
+            const offer = await pc.createOffer();
+            await pc.setLocalDescription(offer);
+            socket.emit('offer', { targetId: null, sdp: offer });
+        }
+
+
         document.getElementById('startBtn').addEventListener('click', async () => {
-            if (pc) return; // already streaming
+            if (streaming) return;
 
             if (!localStream) {
                 try {
@@ -50,23 +80,8 @@
                 } catch (e) { alert('Erreur getUserMedia: ' + e.message); return; }
             }
 
-
-            pc = new RTCPeerConnection();
-
-
-            localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
-
-
-            pc.onicecandidate = (e) => {
-                if (e.candidate) {
-                    socket.emit('ice-candidate', { targetId: null, candidate: e.candidate });
-                }
-            };
-
-
-            const offer = await pc.createOffer();
-            await pc.setLocalDescription(offer);
-            socket.emit('offer', { targetId: null, sdp: offer });
+            streaming = true;
+            await createAndSendOffer();
         });
     </script>
 </body>

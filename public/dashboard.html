@@ -26,6 +26,10 @@ document.getElementById('replayBtn').addEventListener('click', () => {
     triggerReplay();
 });
 
+socket.on('connect', () => {
+    socket.emit('identify', 'dashboard');
+});
+
 socket.on('phone-joined', ({ phoneId }) => {
     console.log('phone joined', phoneId);
 });
@@ -38,10 +42,12 @@ socket.on('ice-candidate', async ({ from: sender, candidate }) => {
     }
 });
 
+const rtcConfig = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+
 // This server proxies offers from phones to dashboard; we receive an 'offer' event
 socket.on('offer', async ({ from, sdp }) => {
-    console.log('offer from', from);
-    const pc = new RTCPeerConnection();
+    if (pcs[from]) { pcs[from].close(); delete pcs[from]; }
+    const pc = new RTCPeerConnection(rtcConfig);
     pcs[from] = pc;
 
     pc.ontrack = (ev) => {
