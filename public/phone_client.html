@@ -26,7 +26,23 @@
         socket.emit('identify', 'phone');
 
 
+        // Single listeners registered once (avoid accumulation on repeated clicks)
+        socket.on('answer', async ({ from, sdp }) => {
+            if (!pc) return;
+            try {
+                await pc.setRemoteDescription(new RTCSessionDescription(sdp));
+            } catch (e) { console.error(e); }
+        });
+
+        socket.on('ice-candidate', async ({ from, candidate }) => {
+            if (!pc) return;
+            try { await pc.addIceCandidate(candidate); } catch (e) { console.warn(e); }
+        });
+
+
         document.getElementById('startBtn').addEventListener('click', async () => {
+            if (pc) return; // already streaming
+
             if (!localStream) {
                 try {
                     localStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: true });
@@ -38,7 +54,6 @@
             pc = new RTCPeerConnection();
 
 
-            // send local tracks
             localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
 
 
@@ -49,30 +64,9 @@
             };
 
 
-            // When dashboard sends an offer back (rare in this flow) handle it via signaling
-
-
-            // Create offer and send to dashboard (server will forward to dashboard socket)
             const offer = await pc.createOffer();
             await pc.setLocalDescription(offer);
-            // We don't know dashboard id; server will route by target on dashboard side.
             socket.emit('offer', { targetId: null, sdp: offer });
-
-
-            // Listen for answer from dashboard (proxied)
-            socket.on('answer', async ({ from, sdp }) => {
-                try {
-                    await pc.setRemoteDescription(new RTCSessionDescription(sdp));
-                } catch (e) { console.error(e); }
-            });
-
-
-            socket.on('ice-candidate', async ({ from, candidate }) => {
-                try { await pc.addIceCandidate(candidate); } catch (e) { console.warn(e); }
-            });
-
-
-            alert('Offer sent to dashboard (via signaling).');
         });
     </script>
 </body>
