@@ -30,6 +30,14 @@ socket.on('phone-joined', ({ phoneId }) => {
     console.log('phone joined', phoneId);
 });
 
+// Handle ICE candidates from remote peers (single listener, dispatches by sender ID)
+socket.on('ice-candidate', async ({ from: sender, candidate }) => {
+    const pc = pcs[sender];
+    if (pc) {
+        try { await pc.addIceCandidate(candidate); } catch(e){ console.warn(e); }
+    }
+});
+
 // This server proxies offers from phones to dashboard; we receive an 'offer' event
 socket.on('offer', async ({ from, sdp }) => {
     console.log('offer from', from);
@@ -37,11 +45,9 @@ socket.on('offer', async ({ from, sdp }) => {
     pcs[from] = pc;
 
     pc.ontrack = (ev) => {
-        console.log('ontrack', from, ev.streams);
         const stream = ev.streams[0];
         remoteStreams[from] = stream;
         attachMiniStream(from, stream);
-        // If this becomes main video, set srcObject
     };
 
     pc.onicecandidate = (e) => {
@@ -54,13 +60,6 @@ socket.on('offer', async ({ from, sdp }) => {
     const answer = await pc.createAnswer();
     await pc.setLocalDescription(answer);
     socket.emit('answer', { targetId: from, sdp: pc.localDescription });
-
-    // Listen for ICE candidates from server (scoped to this peer)
-    socket.on('ice-candidate', async ({ from: sender, candidate }) => {
-        if (sender === from) {
-            try { await pc.addIceCandidate(candidate); } catch(e){ console.warn(e); }
-        }
-    });
 });
 
 socket.on('phone-left', ({ phoneId }) => {
